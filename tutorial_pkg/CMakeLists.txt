@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
   find_package(rclcpp REQUIRED)
   find_package(std_msgs REQUIRED)
   find_package(geometry_msgs REQUIRED)
+  find_package(sensor_msgs REQUIRED)
   find_package(nav_msgs REQUIRED)
 
 find_package(ament_lint_auto REQUIRED)
@@ -30,7 +31,7 @@ find_package(ament_lint_auto REQUIRED)
 
 
 add_executable(tutorial_pkg_node src/tutorial_pkg_node.cpp)
-ament_target_dependencies(tutorial_pkg_node rclcpp std_msgs geometry_msgs nav_msgs)
+ament_target_dependencies(tutorial_pkg_node rclcpp std_msgs geometry_msgs nav_msgs sensor_msgs)
 
 
 target_include_directories(tutorial_pkg_node PUBLIC
