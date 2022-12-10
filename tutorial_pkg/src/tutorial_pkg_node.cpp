@@ -39,6 +39,9 @@ angles.yaw = atan2(siny_cosp, cosy_cosp);
 return angles;
 }
 class Stopper : public rclcpp::Node{
+double laser_landmark1 = 1.3, laser_landmark2 = 1.4;
+double laser_landmark3 = 0.57, laser_landmark4 = 0.3, laser_landmark5 = 0.4;
+int stage = 1;
 public:
 /* velocity control variables*/
 constexpr const static double FORWARD_SPEED_LOW = 0.1;
@@ -67,8 +70,8 @@ void moveRight(double turn_right_speed);
 void moveForwardRight(double forwardSpeed, double turn_right_speed);
 void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odomMsg);
 double PositionX=0.3, PositionY=0.3, homeX=0.3, homeY=0.3;
-double odom_landmark1=1.20, odom_landmark1a=0.38, odom_landmark2=0.80;
-int stage=0;
+/* double odom_landmark1=1.20, odom_landmark1a=0.38, odom_landmark2=0.80;
+int stage=0; */
 double robVelocity;
 int numberOfCycle=0;
 void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
@@ -117,7 +120,7 @@ PositionY = odomMsg->pose.pose.position.y + homeY;
 
 RCLCPP_INFO(this->get_logger(),"RobotPostion: %.2f , %.2f",PositionX, PositionY );
 RCLCPP_INFO(this->get_logger(), "Robot stage: %d ", stage );
-if (PositionY < odom_landmark1 && PositionX < odom_landmark1a){
+/* if (PositionY < odom_landmark1 && PositionX < odom_landmark1a){
 stage = 1;
 moveForward(FORWARD_SPEED_MIDDLE);}
 else if (PositionX < odom_landmark2){
@@ -138,6 +141,7 @@ moveForward(FORWARD_SPEED_MIDDLE);
 else{
 stage = 6;
 moveStop();}
+*/
 robVelocity = odomMsg->twist.twist.linear.x;
 odomVelFile << numberOfCycle++ << " " << robVelocity << endl;
 odomTrajFile<< PositionX <<" "<< PositionY<<endl;
@@ -148,6 +152,7 @@ robotQuat.w = odomMsg->pose.pose.orientation.w;
 robotAngles = ToEulerAngles(robotQuat);
 robotHeadAngle = robotAngles.yaw;
 }
+
 void Stopper::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
 leftRange = scan->ranges[300]; // get a range reading at the left angle
@@ -165,6 +170,36 @@ transformMapPoint(laserMapFile, rightRange, rightAngle, robotHeadAngle,
 PositionX, PositionY);
 transformMapPoint(laserMapFile, mrightRange, mrightAngle, robotHeadAngle,
 PositionX, PositionY);
+switch(stage){
+	case 1:
+		if (frontRange > laser_landmark1)
+			moveForward(FORWARD_SPEED_MIDDLE);
+		else stage = 2;
+		break;
+	case 2:
+		if (mleftRange < laser_landmark2)
+			moveForwardRight(FORWARD_SPEED_MIDDLE, TURN_RIGHT_SPEED_MIDDLE);
+		else stage = 3;
+		break;
+	case 3:
+		if (frontRange > laser_landmark3)
+			moveForward(FORWARD_SPEED_MIDDLE);
+		else stage = 4;
+		break;
+	case 4:
+		if (mrightRange > laser_landmark4)
+			moveForwardRight(FORWARD_SPEED_MIDDLE, TURN_RIGHT_SPEED_MIDDLE);
+		else stage = 5;
+		break;
+	case 5:
+		if (frontRange > laser_landmark5)
+			moveForward(FORWARD_SPEED_MIDDLE);
+		else stage = 6;
+		break;
+	case 6:
+		moveStop();
+		break;
+}
 }
 void Stopper::transformMapPoint(ofstream& fp, double laserRange, double laserTh, double robotTh, double robotX, double robotY){
 double transX, transY;
